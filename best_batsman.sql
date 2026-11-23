@@ -132,7 +132,8 @@ set dot_ball_percentage=(dot_balls/balls_faced)*100;
 
 -- Selecting top 10 best batsman in powerplay
 select batsman from powerplay_bat
-order by total_runs desc,strikerate desc,consistency desc,boundary_percentage desc,dot_ball_percentage asc
+where Balls_faced>100
+order by strikerate desc,dot_ball_percentage asc,boundary_percentage desc,consistency desc,total_runs desc
 limit 10;
 
 
