@@ -2,19 +2,20 @@
 select striker as "Batsman",sum(runs_of_bat) as "Total runs in powerplay" from ipl
 where ball between 0.1 and 5.6 and wide=0
 group by striker
-order by "Total runs in powerplay";
+order by sum(runs_of_bat) desc;
 
 -- Balls faced by each batsman in powerplay
 select striker as 'Batsman',count(striker) as 'Balls faced' from ipl
 where ball between 0.1 and 5.6 and wide=0
 group by striker
-order by count(striker);
+order by count(striker) desc;
 
 -- Creating new table for storing those values 
 create table powerplay_bat as 
 select striker as Batsman,count(striker) as Balls_faced,sum(runs_of_bat) as Total_runs from ipl
 where ball between 0.1 and 5.6 and wide=0
-group by striker;
+group by striker
+order by sum(runs_of_bat) desc,count(striker) desc;
 
 set sql_safe_updates=0;
 
@@ -29,7 +30,8 @@ set Strikerate=(Total_runs/Balls_faced)*100;
 -- Calculating boundary percentage
 select striker as "Batsman",sum(runs_of_bat) as "Total runs in boundaries in powerplay" from ipl
 where ball between 0.1 and 5.6 and wide=0 and (runs_of_bat=4 or runs_of_bat=6)
-group by striker;
+group by striker
+order by sum(runs_of_bat) desc;
 
 -- Adding column:runs scored in boundaries
 alter table powerplay_bat
@@ -62,9 +64,9 @@ set boundary_percentage=0
 where boundary_percentage is null;
 
 -- Scores of powerplay by each batter in each match and store it in new table
-create table a as select striker,match_id,sum(runs_of_bat) as each_match_score from ipl
+create table a as select striker,match_no,sum(runs_of_bat) as each_match_score from ipl
 where ball between 0.1 and 5.6 and wide=0
-group by striker,match_id;
+group by striker,match_no;
 
 select * from a;
 
@@ -73,8 +75,8 @@ alter table powerplay_bat
 add column matches_played int;
 
 -- Updating it to the table
-update powerplay_bat b join(select count(distinct match_id) as matches_played,striker from ipl
-where batting_team='Sunrisers Hyderabad' and ball between 0.1 and 5.6 and wide=0
+update powerplay_bat b join(select count(distinct match_no) as matches_played,striker from ipl
+where ball between 0.1 and 5.6 and wide=0
 group by striker) s
 on b.batsman=s.striker
 set b.matches_played=s.matches_played;
@@ -85,50 +87,52 @@ where each_match_score>20
 group by striker;
 
 -- Adding column:Matches above 20 score
-alter table srh_powerplay_bat
+alter table powerplay_bat
 add column matches_above_20 int;
 
 -- Updating it to the table
-update srh_powerplay_bat s join(select striker,count(striker) as above from a
+update powerplay_bat s join(select striker,count(striker) as above from a
 where each_match_score>20
 group by striker) b
 on s.batsman=b.striker
 set s.matches_above_20=b.above;
 
 -- Updating null values to zero
-update srh_powerplay_bat
+update powerplay_bat
 set matches_above_20=0
 where matches_above_20 is null;
 
 -- Adding column consistency
-alter table srh_powerplay_bat
+alter table powerplay_bat
 add column consistency decimal(6,2);
 
 -- Updating consistency
-update srh_powerplay_bat
-set consistency=(matches_above_20/matches_powerplay)*100;
+update powerplay_bat
+set consistency=(matches_above_20/matches_played)*100;
 
 -- Add column:dot balls
-alter table srh_powerplay_bat
+alter table powerplay_bat
 add column dot_balls int;
 
 -- Updating it to the table
-update srh_powerplay_bat s join(select striker,count(runs_of_bat) as total_dot_balls from ipl
-where batting_team='Sunrisers Hyderabad' and ball between 0.1 and 5.6 and wide=0 and (runs_of_bat=0)
+update powerplay_bat s join(select striker,count(runs_of_bat) as total_dot_balls from ipl
+where ball between 0.1 and 5.6 and wide=0 and (runs_of_bat=0)
 group by striker) b
 on s.batsman=b.striker
 set s.dot_balls=b.total_dot_balls;
 
 -- Adding column dot ball percentage
-alter table srh_powerplay_bat
+alter table powerplay_bat
 add column dot_ball_percentage decimal(6,2);
 
 -- Updating dot ball percentage
-update srh_powerplay_bat
+update powerplay_bat
 set dot_ball_percentage=(dot_balls/balls_faced)*100;
 
--- Selecting best batsman from SRH in powerplay
-select batsman from srh_powerplay_bat
+
+-- Selecting top 10 best batsman in powerplay
+select batsman from powerplay_bat
 order by total_runs desc,strikerate desc,consistency desc,boundary_percentage desc,dot_ball_percentage asc
-limit 1;
+limit 10;
+
 
