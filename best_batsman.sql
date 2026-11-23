@@ -1,19 +1,19 @@
--- Runs scored by each batsman in powerplay in SRH team
-select striker as "Batsman",sum(runs_off_bat) as "Total runs in powerplay" from ipl
-where ball between 0.1 and 5.6 and wides=0
+-- Runs scored by each batsman in powerplay
+select striker as "Batsman",sum(runs_of_bat) as "Total runs in powerplay" from ipl
+where ball between 0.1 and 5.6 and wide=0
 group by striker
 order by "Total runs in powerplay";
 
 -- Balls faced by each batsman in powerplay
 select striker as 'Batsman',count(striker) as 'Balls faced' from ipl
-where ball between 0.1 and 5.6 and wides=0
+where ball between 0.1 and 5.6 and wide=0
 group by striker
 order by count(striker);
 
 -- Creating new table for storing those values 
 create table powerplay_bat as 
-select striker as Batsman,count(striker) as Balls_faced,sum(runs_off_bat) as Total_runs from ipl
-where ball between 0.1 and 5.6 and wides=0
+select striker as Batsman,count(striker) as Balls_faced,sum(runs_of_bat) as Total_runs from ipl
+where ball between 0.1 and 5.6 and wide=0
 group by striker;
 
 set sql_safe_updates=0;
@@ -27,8 +27,8 @@ update powerplay_bat
 set Strikerate=(Total_runs/Balls_faced)*100;
 
 -- Calculating boundary percentage
-select striker as "Batsman",sum(runs_off_bat) as "Total runs in boundaries in powerplay" from ipl
-where ball between 0.1 and 5.6 and wides=0 and (runs_off_bat=4 or runs_off_bat=6)
+select striker as "Batsman",sum(runs_of_bat) as "Total runs in boundaries in powerplay" from ipl
+where ball between 0.1 and 5.6 and wide=0 and (runs_of_bat=4 or runs_of_bat=6)
 group by striker;
 
 -- Adding column:runs scored in boundaries
@@ -36,8 +36,8 @@ alter table powerplay_bat
 add column Boundary_runs int;
 
 -- Adding that column to existing one
-update powerplay_bat s join(select striker,sum(runs_off_bat) as total_boundary_runs from ipl
-where ball between 0.1 and 5.6 and wides=0 and (runs_off_bat=4 or runs_off_bat=6)
+update powerplay_bat s join(select striker,sum(runs_of_bat) as total_boundary_runs from ipl
+where ball between 0.1 and 5.6 and wide=0 and (runs_of_bat=4 or runs_of_bat=6)
 group by striker) b
 on s.batsman=b.striker
 set s.boundary_runs=b.total_boundary_runs;
@@ -62,8 +62,8 @@ set boundary_percentage=0
 where boundary_percentage is null;
 
 -- Scores of powerplay by each batter in each match and store it in new table
-create table a as select striker,match_id,sum(runs_off_bat) as each_match_score from ipl
-where ball between 0.1 and 5.6 and wides=0
+create table a as select striker,match_id,sum(runs_of_bat) as each_match_score from ipl
+where ball between 0.1 and 5.6 and wide=0
 group by striker,match_id;
 
 select * from a;
@@ -74,7 +74,7 @@ add column matches_played int;
 
 -- Updating it to the table
 update powerplay_bat b join(select count(distinct match_id) as matches_played,striker from ipl
-where batting_team='Sunrisers Hyderabad' and ball between 0.1 and 5.6 and wides=0
+where batting_team='Sunrisers Hyderabad' and ball between 0.1 and 5.6 and wide=0
 group by striker) s
 on b.batsman=s.striker
 set b.matches_played=s.matches_played;
@@ -113,8 +113,8 @@ alter table srh_powerplay_bat
 add column dot_balls int;
 
 -- Updating it to the table
-update srh_powerplay_bat s join(select striker,count(runs_off_bat) as total_dot_balls from ipl
-where batting_team='Sunrisers Hyderabad' and ball between 0.1 and 5.6 and wides=0 and (runs_off_bat=0)
+update srh_powerplay_bat s join(select striker,count(runs_of_bat) as total_dot_balls from ipl
+where batting_team='Sunrisers Hyderabad' and ball between 0.1 and 5.6 and wide=0 and (runs_of_bat=0)
 group by striker) b
 on s.batsman=b.striker
 set s.dot_balls=b.total_dot_balls;
@@ -131,3 +131,4 @@ set dot_ball_percentage=(dot_balls/balls_faced)*100;
 select batsman from srh_powerplay_bat
 order by total_runs desc,strikerate desc,consistency desc,boundary_percentage desc,dot_ball_percentage asc
 limit 1;
+
