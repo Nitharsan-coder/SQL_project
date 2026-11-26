@@ -1,0 +1,18 @@
+Kagiso Rabada
+Bhuvneshwar Kumar
+Mohammed Siraj
+Jofra Archer
+Mohammed Shami
+Arshdeep Singh
+Nandre Burger
+Josh Hazlewood
+Prince Yadav
+Deepak Chahar
+
+
+Criteria:
+Wickets taken
+Economy rate
+Strike rate
+Dot ball percentage
+Boundaries conceded 
